@@ -1,0 +1,174 @@
+---
+import Base from '@layouts/Base.astro';
+import ProductCard from '@components/ProductCard.astro';
+import BestelBlock from '@components/BestelBlock.astro';
+import { getRecepten, getProducten } from '@lib/content';
+
+export async function getStaticPaths() {
+  const recepten = await getRecepten();
+  return recepten.map(r => ({
+    params: { slug: r.data.slug ?? r.id.replace(/\.md$/, '') },
+    props: { recept: r }
+  }));
+}
+
+const { recept } = Astro.props;
+const d = recept.data;
+
+// Gerelateerde producten ophalen op basis van products_used (= slug)
+const alleProducten = await getProducten();
+const gerelateerd = d.products_used
+  .map(slug => alleProducten.find(p => (p.data.slug ?? p.id.replace(/\.md$/, '')) === slug))
+  .filter((p): p is NonNullable<typeof p> => p !== undefined);
+
+const totaalTijd = (d.prep_time_minutes ?? 0) + (d.cook_time_minutes ?? 0);
+
+// SEO description ≤155 chars (intro mag langer zijn dan dat in de body)
+const metaDesc = d.intro.length > 155 ? d.intro.slice(0, 152).trimEnd() + '…' : d.intro;
+---
+
+<Base title={d.title} description={metaDesc} ogImage={d.main_image}>
+  <!-- Recipe JSON-LD -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Recipe",
+    "name": d.title,
+    "description": d.intro,
+    "author": { "@type": "Organization", "name": "Van os Moe" },
+    ...(d.main_image ? { "image": new URL(d.main_image, Astro.site ?? Astro.url).toString() } : {}),
+    ...(d.published_date ? { "datePublished": (d.published_date instanceof Date ? d.published_date : new Date(d.published_date)).toISOString().slice(0,10) } : {}),
+    ...(d.prep_time_minutes !== undefined ? { "prepTime": `PT${d.prep_time_minutes}M` } : {}),
+    ...(d.cook_time_minutes !== undefined ? { "cookTime": `PT${d.cook_time_minutes}M` } : {}),
+    ...((d.prep_time_minutes !== undefined || d.cook_time_minutes !== undefined) ? { "totalTime": `PT${(d.prep_time_minutes ?? 0) + (d.cook_time_minutes ?? 0)}M` } : {}),
+    ...(d.servings ? { "recipeYield": `${d.servings} personen` } : {})
+  })} />
+  <article>
+    <section class="container">
+      <div class="recept-hero">
+        <div>
+          <span class="eyebrow">
+            {d.season.length > 0 && d.season.join(' · ')}
+          </span>
+          <h1>{d.title}</h1>
+          <p style="margin-top: 1rem; font-size: 1.15rem; line-height: 1.6; color: var(--ink-soft); max-width: 36rem;">
+            {d.intro}
+          </p>
+
+          <div class="meta-strip">
+            {d.servings && (
+              <div class="meta-item">
+                <span class="meta-label">Porties</span>
+                <span class="meta-value">{d.servings} pers</span>
+              </div>
+            )}
+            {d.prep_time_minutes !== undefined && (
+              <div class="meta-item">
+                <span class="meta-label">Prep</span>
+                <span class="meta-value">{d.prep_time_minutes} min</span>
+              </div>
+            )}
+            {d.cook_time_minutes !== undefined && (
+              <div class="meta-item">
+                <span class="meta-label">Kook</span>
+                <span class="meta-value">{d.cook_time_minutes} min</span>
+              </div>
+            )}
+            {totaalTijd > 0 && (
+              <div class="meta-item">
+                <span class="meta-label">Totaal</span>
+                <span class="meta-value">{totaalTijd} min</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {d.main_image && (
+          <figure class="hero-media">
+            <img src={d.main_image} alt={d.main_image_alt ?? d.title} loading="eager" fetchpriority="high" />
+          </figure>
+        )}
+      </div>
+    </section>
+
+    <section class="container container--prose">
+      <div class="prose" set:html={recept.bodyHtml}></div>
+    </section>
+
+    {gerelateerd.length > 0 && (
+      <section class="container">
+        <div class="divider-ornament" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+          </svg>
+        </div>
+        <span class="eyebrow">Met deze producten</span>
+        <h2 style="margin-bottom: 2rem;">Gerelateerde producten</h2>
+        <div class="product-grid">
+          {gerelateerd.map(p => <ProductCard product={p} />)}
+        </div>
+      </section>
+    )}
+  </article>
+
+  <BestelBlock />
+
+  <style>
+    .recept-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 3rem;
+      padding-block: clamp(2.5rem, 5vw, 4rem);
+      align-items: center;
+    }
+    .hero-media {
+      margin: 0;
+      border: 1px solid var(--ink);
+      background: var(--paper-deep);
+      position: relative;
+    }
+    .hero-media::before {
+      content: '';
+      position: absolute;
+      inset: 8px -8px -8px 8px;
+      border: 1px solid var(--ink);
+      z-index: -1;
+      background: var(--paper-shadow);
+    }
+    .hero-media img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+    }
+    .meta-strip {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem 2.5rem;
+      margin-top: 2rem;
+      padding: 1.25rem 0;
+      border-block: 1px solid var(--ink);
+      font-family: var(--font-mono);
+    }
+    .meta-item { display: flex; flex-direction: column; gap: 0.2rem; }
+    .meta-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+    }
+    .meta-value {
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    @media (max-width: 760px) {
+      .recept-hero {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+  </style>
+</Base>

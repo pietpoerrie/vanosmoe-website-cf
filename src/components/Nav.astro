@@ -1,0 +1,34 @@
+---
+import { site, navigation, shop_links } from '@data/site';
+const path = Astro.url.pathname.replace(/\/$/, '') || '/';
+---
+
+<nav class="site-nav" aria-label="Hoofdnavigatie">
+  <div class="nav-inner container">
+  <a href="/" class="brand" aria-label="Naar de homepage van Van os Moe">
+    <img src="/img/logo-badge.svg" alt="Van os Moe" width="2160" height="1988" />
+  </a>
+
+  <button class="nav-toggle" aria-expanded="false" aria-controls="nav-menu" aria-label="Menu openen">
+    <span></span><span></span><span></span>
+  </button>
+
+  <ul id="nav-menu">
+    {navigation.map(item => (
+      <li>
+        <a
+          href={item.href}
+          aria-current={path === item.href || path.startsWith(item.href + '/') ? 'page' : undefined}
+        >
+          {item.label}
+        </a>
+      </li>
+    ))}
+    <li class="cta-item">
+      <a class="cta" href={shop_links.shop_b2c} target="_blank" rel="noopener">
+        Bestel →
+      </a>
+    </li>
+  </ul>
+  </div>
+</nav>

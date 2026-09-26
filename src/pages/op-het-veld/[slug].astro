@@ -1,0 +1,236 @@
+---
+import Base from '@layouts/Base.astro';
+import ProductCard from '@components/ProductCard.astro';
+import BestelBlock from '@components/BestelBlock.astro';
+import { getProducten } from '@lib/content';
+import { maanden } from '@data/site';
+
+export async function getStaticPaths() {
+  const producten = await getProducten();
+  return producten.map(p => ({
+    params: { slug: p.data.slug ?? p.id.replace(/\.md$/, '') },
+    props: { product: p }
+  }));
+}
+
+const { product } = Astro.props;
+const d = product.data;
+
+const statusLabels: Record<typeof d.status, string> = {
+  verwacht: 'Komt eraan',
+  actief:   'Nu beschikbaar',
+  piek:     'In topvorm',
+  einde:    'Bijna gedaan',
+  rust:     'Buiten seizoen'
+};
+
+// Andere producten in hetzelfde seizoen (start-maand match)
+const alle = await getProducten();
+const huidigeSlug = d.slug ?? product.id.replace(/\.md$/, '');
+const overlapt = (a: number, b: number, x: number, y: number) => {
+  // simpele seizoens-overlap (vereenvoudigd, want cross-year is zeldzaam hier)
+  const aRange = a <= b ? [a, b] : [a, 12];
+  const xRange = x <= y ? [x, y] : [x, 12];
+  return aRange[0] <= xRange[1] && xRange[0] <= aRange[1];
+};
+const gerelateerd = alle
+  .filter(p => (p.data.slug ?? p.id.replace(/\.md$/, '')) !== huidigeSlug)
+  .filter(p => overlapt(p.data.season_start_month, p.data.season_end_month, d.season_start_month, d.season_end_month))
+  .slice(0, 3);
+
+const seizoenLabel = `${maanden[d.season_start_month - 1]} – ${maanden[d.season_end_month - 1]}`;
+---
+
+<Base title={d.name} description={d.short_description} ogImage={d.image}>
+  <!-- Product JSON-LD -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": d.name,
+    "description": d.short_description,
+    ...(d.image ? { "image": new URL(d.image, Astro.site ?? Astro.url).toString() } : {}),
+    ...(d.shop_url ? {
+      "offers": {
+        "@type": "Offer",
+        "availability": "https://schema.org/InStock",
+        "url": d.shop_url
+      }
+    } : {})
+  })} />
+  <!-- BreadcrumbList JSON-LD -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Op het veld",
+        "item": new URL('/op-het-veld/', Astro.site ?? Astro.url).toString()
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": d.name,
+        "item": new URL(`/op-het-veld/${huidigeSlug}/`, Astro.site ?? Astro.url).toString()
+      }
+    ]
+  })} />
+  <article>
+    <section class="container product-hero">
+      <div class="hero-media">
+        {d.image && (
+          <img src={d.image} alt={d.image_alt ?? d.name} loading="eager" fetchpriority="high" />
+        )}
+      </div>
+
+      <div class="hero-body">
+        <span class="eyebrow">Op het veld · {seizoenLabel}</span>
+        <h1>{d.name}</h1>
+        {d.name_latin && (
+          <p style="font-family: var(--font-display); font-style: italic; color: var(--ink-faded); margin-top: -0.5rem; font-size: 1.2rem;">
+            {d.name_latin}
+          </p>
+        )}
+
+        <div class={`status-badge status--${d.status}`}>{statusLabels[d.status]}</div>
+
+        <p style="margin-top: 1.5rem; font-size: 1.1rem; line-height: 1.6; color: var(--ink-soft); max-width: 36rem;">
+          {d.short_description}
+        </p>
+
+        <div class="info-card">
+          {d.unit && (
+            <div class="info-row">
+              <span class="label">Per</span>
+              <span class="value">{d.unit}</span>
+            </div>
+          )}
+          {d.price_indication && (
+            <div class="info-row">
+              <span class="label">Prijs</span>
+              <span class="value">{d.price_indication}</span>
+            </div>
+          )}
+          <div class="info-row">
+            <span class="label">Seizoen</span>
+            <span class="value">{seizoenLabel}</span>
+          </div>
+          {d.shop_url && (
+            <a class="btn btn--primary" href={d.shop_url} target="_blank" rel="noopener" style="margin-top: 1rem; align-self: flex-start;">
+              Bestel via webshop <span class="arrow">→</span>
+            </a>
+          )}
+        </div>
+      </div>
+    </section>
+
+    <section class="container container--prose product-body">
+      <div class="prose" set:html={product.bodyHtml}></div>
+    </section>
+
+    {gerelateerd.length > 0 && (
+      <section class="container">
+        <div class="divider-ornament" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+            <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+          </svg>
+        </div>
+        <span class="eyebrow">Ook in dit seizoen</span>
+        <h2 style="margin-bottom: 2rem;">Andere producten op het veld</h2>
+        <div class="product-grid">
+          {gerelateerd.map(p => <ProductCard product={p} />)}
+        </div>
+      </section>
+    )}
+  </article>
+
+  <BestelBlock />
+
+  <style>
+    .product-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 3rem;
+      padding-block: clamp(2.5rem, 5vw, 4rem);
+      align-items: start;
+    }
+    .hero-media {
+      border: 1px solid var(--ink);
+      background: var(--paper-deep);
+      position: relative;
+    }
+    .hero-media::before {
+      content: '';
+      position: absolute;
+      inset: 8px -8px -8px 8px;
+      border: 1px solid var(--ink);
+      z-index: -1;
+      background: var(--paper-shadow);
+    }
+    .hero-media img {
+      width: 100%;
+      aspect-ratio: 4/3;
+      object-fit: cover;
+      display: block;
+    }
+    .hero-body { padding-top: 0.5rem; }
+    .status-badge {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.4rem 0.8rem;
+      border: 1px solid var(--ink);
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      background: var(--paper-deep);
+    }
+    .status-badge.status--actief  { color: var(--asparagus); border-color: var(--asparagus); }
+    .status-badge.status--piek    { color: var(--paper); background: var(--terracotta); border-color: var(--terracotta); }
+    .status-badge.status--verwacht{ color: var(--ink-faded); }
+    .status-badge.status--einde   { color: var(--ink-faded); text-decoration: line-through; }
+    .status-badge.status--rust    { color: var(--ink-faded); font-style: italic; }
+    .info-card {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      border: 1px solid var(--ink);
+      background: var(--paper-deep);
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-width: 30rem;
+    }
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed var(--ink-faded);
+    }
+    .info-row:last-of-type { border-bottom: none; padding-bottom: 0; }
+    .info-row .label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+    }
+    .info-row .value {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--ink);
+      text-align: right;
+    }
+    .product-body { padding-block: 1rem 3rem; }
+
+    @media (max-width: 760px) {
+      .product-hero {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+    }
+  </style>
+</Base>

@@ -1,0 +1,24 @@
+---
+import type { Product } from '@lib/content';
+
+interface Props { product: Product; }
+const { product } = Astro.props;
+const d = product.data;
+const slug = d.slug ?? product.id.replace(/\.md$/, '');
+
+const statusLabels: Record<typeof d.status, string> = {
+  verwacht: 'Komt eraan',
+  actief:   'Nu beschikbaar',
+  piek:     'In topvorm',
+  einde:    'Bijna gedaan',
+  rust:     'Buiten seizoen'
+};
+---
+
+<a class="product-card" href={`/op-het-veld/${slug}`}>
+  {d.image && <img src={d.image} alt={d.image_alt ?? d.name} loading="lazy" />}
+  <span class={`status status--${d.status}`}>{statusLabels[d.status]}</span>
+  <span class="name">{d.name}</span>
+  {d.name_latin && <span class="latin">{d.name_latin}</span>}
+  <span class="desc">{d.short_description}</span>
+</a>

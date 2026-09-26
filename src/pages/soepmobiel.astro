@@ -1,0 +1,145 @@
+---
+import Base from '@layouts/Base.astro';
+import SoepmobielAgenda from '@components/SoepmobielAgenda.astro';
+import { getKomendeSoepmobielStops, getPage } from '@lib/content';
+import { contact } from '@data/site';
+
+const stops = await getKomendeSoepmobielStops();
+
+// Pagina-tekst uit src/content/pages/soepmobiel.md (kop/eyebrow/intro + tagline +
+// agenda-titel + de twee proza-secties als richtext-blokken), met fallback.
+const page = await getPage('soepmobiel');
+const d = page?.data;
+const eyebrow = d?.eyebrow ?? 'Editie · onderweg';
+const titel = d?.title ?? 'Soepmobiel';
+const intro = d?.intro;
+const tagline = d?.tagline;
+const agendaTitel = d?.agenda_titel ?? 'Agenda';
+const metaDescription = d?.meta_description ??
+  'De mobiele soep- en groentekraam van Van os Moe. Op markten, events, en op aanvraag.';
+// Twee proza-blokken in volgorde: [0] "Wat is de soepmobiel?", [1] "Soepmobiel boeken".
+const richtextBlokken = (d?.blocks ?? []).filter((b) => b.type === 'richtext');
+const watHtml = richtextBlokken[0]?.type === 'richtext' ? richtextBlokken[0].content : undefined;
+const boekenHtml = richtextBlokken[1]?.type === 'richtext' ? richtextBlokken[1].content : undefined;
+const whatsappUrl = `https://wa.me/${contact.whatsapp.replace('+', '')}?text=${encodeURIComponent('Dag Pieter, ik wil graag de soepmobiel boeken voor een event.')}`;
+const mailto = `mailto:${contact.email}?subject=${encodeURIComponent('Soepmobiel-boeking')}&body=${encodeURIComponent('Dag Pieter,\n\nWij willen graag de soepmobiel boeken voor:\n- Datum:\n- Locatie:\n- Verwacht aantal personen:\n- Type event:\n\nKan u laten weten of dit kan?\n\nGroeten,\n')}`;
+---
+
+<Base title={titel} description={metaDescription}>
+  <section class="container">
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{titel}</h1>
+    {tagline ? (
+      <p class="tagline" style="margin-top: 1rem; max-width: 42rem;" set:html={tagline} />
+    ) : (
+      <p class="tagline" style="margin-top: 1rem; max-width: 42rem;">
+        De soep <em>komt</em> naar u toe.
+      </p>
+    )}
+    {intro ? (
+      <div class="page-intro" set:html={intro} />
+    ) : (
+      <p class="page-intro-fallback">
+        Onze mobiele soep- en groentekraam, op pad over Vlaams-Brabant. Verse soep
+        uit de pot, in beker of pot mee, en wat er die week op het veld stond. Hieronder
+        de komende stops.
+      </p>
+    )}
+  </section>
+
+  <section class="container">
+    <span class="eyebrow">Komende stops</span>
+    <h2 style="margin-bottom: 1.5rem;">{agendaTitel}</h2>
+    <SoepmobielAgenda stops={stops} />
+  </section>
+
+  <div class="divider-ornament" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+    </svg>
+  </div>
+
+  <section class="container container--prose">
+    <div class="prose">
+      <span class="eyebrow">Wat het is</span>
+      {watHtml ? (
+        <Fragment set:html={watHtml} />
+      ) : (
+        <>
+          <h2>Wat is de soepmobiel?</h2>
+          <p>
+            De soepmobiel is onze mobiele kraam — een aangepast voertuig met
+            warm-houdketels, een koelvitrine en een toonbank. We rijden ermee naar
+            boerenmarkten, dorpsfeesten, streekproductenmarkten en evenementen
+            waar mensen iets te eten en te kuieren willen.
+          </p>
+          <p>
+            Het idee is simpel: we maken soep van wat we zelf telen, en die soep
+            gaat in een beker of pot mee. Daarnaast wat er op het veld staat —
+            asperges in mei, fleurs in juli, courgettes in augustus, pompoenen in oktober.
+          </p>
+          <p>
+            Geen pakjes, geen extracten, geen geforceerde producten. Wat in de pot
+            zit, stond een week geleden nog op het veld.
+          </p>
+        </>
+      )}
+    </div>
+  </section>
+
+  <section class="container container--prose">
+    <div class="prose prose--boxed">
+      <span class="eyebrow">Voor uw event</span>
+      {boekenHtml ? (
+        <Fragment set:html={boekenHtml} />
+      ) : (
+        <>
+          <h2 style="margin-top: 0;">Soepmobiel boeken</h2>
+          <p>
+            De soepmobiel staat in te boeken voor private events, bedrijfsfeesten,
+            dorpsfeesten, openingen, buurtfeesten — alles waar verse soep en
+            seizoensproducten op hun plek zijn. We werken op aanvraag en plannen
+            graag op voorhand mee. Voor grotere events: zo vroeg mogelijk laten
+            weten — vanaf een maand op voorhand werkt het best.
+          </p>
+          <p>
+            Laat weten wat voor event, hoeveel mensen, welke datum en welke locatie.
+            We bekijken het, sturen een voorstel, en bevestigen.
+          </p>
+        </>
+      )}
+
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.5rem;">
+        <a class="btn btn--primary" href={mailto}>
+          Stuur een mail <span class="arrow">→</span>
+        </a>
+        <a class="btn btn--ghost" href={whatsappUrl} target="_blank" rel="noopener">
+          WhatsApp Pieter
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    /* Intro-paragraaf (uit content of fallback): zelfde maat als voorheen. */
+    .page-intro :global(p),
+    .page-intro-fallback {
+      margin-top: 1.5rem;
+      max-width: 42rem;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+    /* Boek-blok: het bordered-kader dat voorheen inline gestyled was. */
+    .prose--boxed {
+      background: var(--paper-deep);
+      border: 1px solid var(--ink);
+      padding: clamp(1.5rem, 4vw, 2.5rem);
+      max-width: var(--max-w-prose);
+    }
+    /* Eerste kop in het kader sluit strak aan (was inline margin-top: 0). */
+    .prose--boxed :global(h2:first-of-type) {
+      margin-top: 0;
+    }
+  </style>
+</Base>

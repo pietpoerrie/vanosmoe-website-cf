@@ -1,0 +1,56 @@
+{
+  "_comment": "Origineel-URLs van de Webosaurus CDN. Run `scripts/download-images.sh` van een netwerk dat webosaurus.imgix.net kan bereiken om alles lokaal binnen te halen. De huidige .svg-placeholders worden dan vervangen door .jpg.",
+  "_last_verified": "2026-05-18",
+  "images": [
+    {
+      "local_path": "public/img/sfeer/boerderij-01.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/MG_2775.jpg?h=2000",
+      "description": "Boerderij sfeerbeeld 1"
+    },
+    {
+      "local_path": "public/img/sfeer/boerderij-02.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/MG_2790.jpg?h=2000",
+      "description": "Boerderij sfeerbeeld 2"
+    },
+    {
+      "local_path": "public/img/sfeer/werk-2019.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/20190709_201739_191202_145345.jpg?h=2000",
+      "description": "Werk in actie — zomer 2019"
+    },
+    {
+      "local_path": "public/img/sfeer/werk-2022-aug.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/20220820_112906.jpg?h=2000",
+      "description": "Werk in actie — augustus 2022"
+    },
+    {
+      "local_path": "public/img/sfeer/werk-2022-sep.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/20220910_112639.jpg?h=2000",
+      "description": "Werk in actie — september 2022"
+    },
+    {
+      "local_path": "public/img/sfeer/aspergesoep.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/4-Asperge-soep-sfeerfoto-2.jpg?h=2000",
+      "description": "Aspergesoep sfeerfoto"
+    },
+    {
+      "local_path": "public/img/sfeer/banner.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/banner-website.jpg?h=2000",
+      "description": "Banner-website (huidige OG-image)"
+    },
+    {
+      "local_path": "public/img/products/asperge-bundel-500g.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/1-Asperge-bussel-500gr-productfoto-liggend.jpg?h=2000",
+      "description": "Witte asperges, busseltje van 500g"
+    },
+    {
+      "local_path": "public/img/products/fleur-de-courgette.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/4-Fleur-de-courgette-productfoto-liggend.jpg?h=2000",
+      "description": "Fleur de courgette, productfoto liggend"
+    },
+    {
+      "local_path": "public/img/portret/pieter.jpg",
+      "source_url": "https://webosaurus.imgix.net/miniwebsites/whatsoup/4-Portret-Pieter.jpg?h=2000",
+      "description": "Portret van Pieter"
+    }
+  ]
+}

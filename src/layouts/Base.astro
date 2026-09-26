@@ -1,0 +1,146 @@
+---
+import { site, contact, social } from '@data/site';
+import Nav from '@components/Nav.astro';
+import Footer from '@components/Footer.astro';
+import DateStrip from '@components/DateStrip.astro';
+import '@/styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  showDateStrip?: boolean;
+  /** Override OG image (anders fallback op /img/sfeer/banner). Mag relatief pad zijn. */
+  ogImage?: string;
+  /** Wanneer true: zet meta robots op noindex (bv. 404). */
+  noindex?: boolean;
+}
+
+const {
+  title,
+  description = site.meta_description,
+  showDateStrip = true,
+  ogImage = '/img/sfeer/banner.jpg',
+  noindex = false
+} = Astro.props;
+
+const fullTitle = title ? `${title} · ${site.naam}` : `${site.naam} — ${site.tagline}`;
+const _canonicalRaw = new URL(Astro.url.pathname, Astro.site ?? Astro.url).toString();
+const canonical = _canonicalRaw.endsWith('/') ? _canonicalRaw : _canonicalRaw + '/';
+const ogImageUrl = new URL(ogImage, Astro.site ?? Astro.url).toString();
+---
+
+<!doctype html>
+<html lang="nl-BE">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="generator" content={Astro.generator} />
+
+  <title>{fullTitle}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  {noindex && <meta name="robots" content="noindex, follow" />}
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={fullTitle} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:site_name" content={site.naam} />
+  <meta property="og:locale" content="nl_BE" />
+  <meta property="og:image" content={ogImageUrl} />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={fullTitle} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImageUrl} />
+
+  <!-- Theme -->
+  <meta name="theme-color" content="#f5ecd6" />
+
+  <!-- Favicon (huisstijl-badge) -->
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+
+  <!-- Preconnect naar Google Fonts (CSS importeert ze, preconnect verkort handshake) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Schema.org LocalBusiness / Farm -->
+  <script type="application/ld+json" set:html={JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": ["Farm", "FoodProducer"],
+    "name": site.naam,
+    "description": site.meta_description,
+    "url": `https://www.${site.domein}`,
+    "telephone": contact.telefoon_intl,
+    "email": contact.email,
+    "image": `https://www.${site.domein}/img/sfeer/banner.jpg`,
+    "priceRange": "€",
+    "founder": {
+      "@type": "Person",
+      "name": "Pieter Goris"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Heidestraat 39",
+      "addressLocality": "Begijnendijk",
+      "postalCode": "3130",
+      "addressCountry": "BE"
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": 51.0167,
+      "longitude": 4.7639
+    },
+    "openingHoursSpecification": [
+      {
+        "@type": "OpeningHoursSpecification",
+        "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+        "opens": "00:00",
+        "closes": "23:59",
+        "description": "Automaat 24u/24u"
+      }
+    ],
+    "sameAs": [social.facebook]
+  })} />
+</head>
+<body>
+  <a class="skip-link" href="#main">Naar de inhoud</a>
+  <Nav />
+  {showDateStrip && <DateStrip />}
+
+  <main id="main">
+    <slot />
+  </main>
+
+  <Footer />
+
+  <script>
+    // Mobile nav toggle — class-based zodat resize naar desktop niet breekt
+    const toggle = document.querySelector<HTMLButtonElement>('.nav-toggle');
+    const menu = document.querySelector<HTMLElement>('#nav-menu');
+    if (toggle && menu) {
+      toggle.addEventListener('click', () => {
+        const open = toggle.getAttribute('aria-expanded') === 'true';
+        const next = !open;
+        toggle.setAttribute('aria-expanded', String(next));
+        toggle.setAttribute('aria-label', next ? 'Menu sluiten' : 'Menu openen');
+        menu.classList.toggle('is-open', next);
+      });
+
+      // Sluit het menu bij Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+          toggle.setAttribute('aria-expanded', 'false');
+          toggle.setAttribute('aria-label', 'Menu openen');
+          menu.classList.remove('is-open');
+          toggle.focus();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

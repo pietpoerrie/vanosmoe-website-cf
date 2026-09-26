@@ -1,0 +1,23 @@
+---
+import { huidigSeizoen, huidigeMaand, maandNummer } from '@data/site';
+
+const nu = new Date();
+const seizoen = huidigSeizoen(nu);
+const maand = huidigeMaand(nu);
+const dagnaam = nu.toLocaleDateString('nl-BE', { weekday: 'long' });
+const dag = nu.toLocaleDateString('nl-BE', { day: 'numeric', month: 'long' });
+---
+
+<div class="datestrip">
+  <div class="container">
+    <span class="item">
+      <span>{dagnaam} {dag}</span>
+    </span>
+    <span class="item">
+      <span>Editie {seizoen.naam} · Maand {maandNummer(nu)}/12</span>
+    </span>
+    <span class="item">
+      <span>Vol. {nu.getFullYear()}</span>
+    </span>
+  </div>
+</div>

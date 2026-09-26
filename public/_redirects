@@ -1,0 +1,15 @@
+# _redirects — werkt op Cloudflare Pages én Netlify
+# ===================================================
+# Format: <from> <to> <status>
+# 301 = permanent (SEO-equity overdraagt), 302 = temporary (externe deeplink).
+# Géén catch-all naar / — onbekende paden vallen op de 404-page.
+
+# Legacy paden van de vorige Webosaurus-site
+/over-ons      /de-boerderij/                     301
+/contact       /vind-ons/                         301
+/producten     /op-het-veld/                      301
+/seizoen       /op-het-veld/                      301
+
+# Webshop draait extern op Linkedfarm — 302 omdat de URL kan verhuizen
+/webshop       https://shop.vanosmoe.be/webshop   302
+/shop          https://shop.vanosmoe.be/webshop   302

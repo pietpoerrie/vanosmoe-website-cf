@@ -1,0 +1,62 @@
+---
+import { site, contact, bedrijf, social, shop_links, navigation } from '@data/site';
+const jaar = new Date().getFullYear();
+---
+
+<footer class="site-footer">
+  <div class="container">
+    <div>
+      <h4>{site.naam}</h4>
+      <p style="font-family: var(--font-display); font-style: italic; font-size: 1.1rem; line-height: 1.4; margin: 0 0 0.5rem; color: var(--ink);">
+        {site.tagline}
+      </p>
+      <p style="font-size: 0.85rem; color: var(--ink-soft); margin: 0;">
+        {bedrijf.juridisch_naam}<br>
+        {bedrijf.adres_lijn_1}<br>
+        {bedrijf.postcode} {bedrijf.stad}<br>
+        BTW {bedrijf.btw}
+      </p>
+    </div>
+
+    <div>
+      <h4>Bezoek de boerderij</h4>
+      <p style="margin: 0; font-size: 0.9rem;">
+        Heidestraat 39<br>
+        3130 Begijnendijk
+      </p>
+      <h4 style="margin-top: 1.25rem;">Automaat Leuven</h4>
+      <p style="margin: 0; font-size: 0.9rem;">
+        Locomotievenstraat 5<br>
+        3010 Kessel-lo (HAL5)
+      </p>
+    </div>
+
+    <div>
+      <h4>Contact</h4>
+      <ul>
+        <li><a href={`tel:${contact.telefoon_intl}`}>{contact.telefoon}</a></li>
+        <li><a href={`mailto:${contact.email}`}>{contact.email}</a></li>
+        <li><a href={`https://wa.me/${contact.whatsapp.replace('+','')}`} target="_blank" rel="noopener">WhatsApp</a></li>
+        {social.facebook && <li><a href={social.facebook} target="_blank" rel="noopener">Facebook</a></li>}
+      </ul>
+    </div>
+
+    <div>
+      <h4>Navigatie</h4>
+      <ul>
+        {navigation.map(item => (
+          <li><a href={item.href}>{item.label}</a></li>
+        ))}
+      </ul>
+      <h4 style="margin-top: 1.25rem;">Bestellen</h4>
+      <ul>
+        <li><a href={shop_links.shop_b2c} target="_blank" rel="noopener">Webshop</a></li>
+      </ul>
+    </div>
+
+    <div class="colophon">
+      <span>© {jaar} {site.naam}</span>
+      <span>Begijnendijk · Vlaams-Brabant</span>
+    </div>
+  </div>
+</footer>

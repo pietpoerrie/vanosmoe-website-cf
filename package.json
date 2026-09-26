@@ -1,0 +1,21 @@
+{
+  "name": "vanosmoe-website-cf",
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Brand-site voor Van os Moe — streekboerderij in Begijnendijk. Astro + content collections (markdown in git).",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "astro": "^5.0.0",
+    "marked": "^18.0.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.93.0"
+  }
+}

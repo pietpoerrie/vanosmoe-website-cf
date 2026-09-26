@@ -1,0 +1,46 @@
+---
+import type { SoepmobielStop } from '@lib/content';
+
+interface Props {
+  stops: SoepmobielStop[];
+  limiet?: number;
+}
+
+const { stops, limiet } = Astro.props;
+const lijst = limiet ? stops.slice(0, limiet) : stops;
+
+function formatDag(d: Date) {
+  return d.toLocaleDateString('nl-BE', { weekday: 'short' }).toLowerCase().replace('.', '');
+}
+function formatDatum(d: Date) {
+  return d.toLocaleDateString('nl-BE', { day: 'numeric', month: 'short' });
+}
+---
+
+<div class="agenda">
+  {lijst.length === 0 && (
+    <p style="font-style: italic; color: var(--ink-faded);">
+      Geen geplande stops voor de komende periode. Volg ons op Facebook voor laatste updates.
+    </p>
+  )}
+  {lijst.map(stop => {
+    const d = stop.data;
+    return (
+      <article class="agenda-row">
+        <div class="date">
+          {formatDag(d.date)}
+          <strong>{formatDatum(d.date)}</strong>
+        </div>
+        <div class="where">
+          {d.event_name ?? d.location_name}
+          <small>
+            {d.location_name !== d.event_name && d.event_name ? `${d.location_name} · ` : ''}
+            {d.city}
+            {d.notes && ` · ${d.notes}`}
+          </small>
+        </div>
+        <div class="time">{d.start_time}–{d.end_time}</div>
+      </article>
+    );
+  })}
+</div>

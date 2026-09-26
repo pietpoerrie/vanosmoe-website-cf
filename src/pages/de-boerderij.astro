@@ -1,0 +1,42 @@
+---
+import Base from '@layouts/Base.astro';
+import BestelBlock from '@components/BestelBlock.astro';
+import PageBlocks from '@components/PageBlocks.astro';
+import { getPage } from '@lib/content';
+
+// Hero-foto uit de pagina-content (src/content/pages/de-boerderij.md).
+// Valt terug op de meegeleverde foto als het veld leeg is.
+const boerderij = await getPage('de-boerderij');
+const heroImage = boerderij?.data.hero_image ?? '/img/sfeer/boerderij-01.jpg';
+// Het verhaal zelf staat als `blocks` in de frontmatter: richtext-, image- en
+// quote-blokken in volgorde.
+const blocks = boerderij?.data.blocks ?? [];
+const titel = boerderij?.data.title ?? 'De boerderij';
+const metaDescription = boerderij?.data.meta_description ?? 'Aan de Heidestraat in Begijnendijk telen we met zorg een breed assortiment groenten en maken we huisgemaakte soep van eigen oogst.';
+---
+
+<Base title={titel} description={metaDescription}>
+  <article>
+    <section class="container container--prose">
+      <span class="eyebrow">Editie · het verhaal</span>
+      <h1>De boerderij</h1>
+      <p class="tagline" style="margin-top: 1.5rem;">
+        Met zorg geteeld in <em>Begijnendijk</em>. Niks haastig, niks geforceerd.
+      </p>
+    </section>
+
+    <section class="container container--prose">
+      <figure class="figure-inline">
+        <img src={heroImage} alt="De boerderij aan de Heidestraat" />
+        <figcaption>Heidestraat 39 — waar het allemaal gebeurt.</figcaption>
+      </figure>
+
+      <PageBlocks blocks={blocks} />
+    </section>
+  </article>
+
+  <BestelBlock
+    titel="Eens proeven?"
+    body="Bestel via de webshop, kom langs bij een van de automaten, of vind ons op de soepmobiel."
+  />
+</Base>

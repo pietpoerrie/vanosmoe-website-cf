@@ -1,0 +1,133 @@
+---
+import Base from '@layouts/Base.astro';
+import AlmanakHero from '@components/AlmanakHero.astro';
+import ProductCard from '@components/ProductCard.astro';
+import SoepmobielAgenda from '@components/SoepmobielAgenda.astro';
+import BestelBlock from '@components/BestelBlock.astro';
+import {
+  getProducten,
+  getProductenInSeizoen,
+  getKomendeSoepmobielStops,
+  getRecepten,
+  getPage
+} from '@lib/content';
+
+// Home-pagina-tekst uit src/content/pages/home.md (hero-eyebrow/intro + de drie
+// sectie-koppen), met fallback op de hardcoded tekst.
+const page = await getPage('home');
+const d = page?.data;
+const sectie1Eyebrow = d?.sectie1_eyebrow ?? 'Sectie I · Wat groeit er';
+const sectie1Titel = d?.sectie1_titel ?? 'Op het veld deze maand';
+const sectie2Eyebrow = d?.sectie2_eyebrow ?? 'Sectie II · De soepmobiel';
+const sectie2Titel = d?.sectie2_titel ?? 'Soepmobiel — komende stops';
+const sectie3Eyebrow = d?.sectie3_eyebrow ?? 'Sectie III · Uit de keuken';
+const sectie3Titel = d?.sectie3_titel ?? 'Recepten in seizoen';
+
+// Feature = featured product dat NU in seizoen is, fallback: eerste featured
+const inSeizoen = await getProductenInSeizoen();
+const alleProducten = await getProducten();
+const feature =
+  inSeizoen.find(p => p.data.featured) ??
+  alleProducten.find(p => p.data.featured) ??
+  alleProducten[0];
+
+// Grid: max 6 producten in seizoen
+const veldProducten = inSeizoen.slice(0, 6);
+
+// Soepmobiel preview — 3 komende stops
+const stops = await getKomendeSoepmobielStops();
+
+// Recepten preview — 3 nieuwste
+const recepten = (await getRecepten()).slice(0, 3);
+---
+
+<Base title="Streekboerderij Begijnendijk — hoevesoep & groenten">
+  <AlmanakHero feature={feature} eyebrow={d?.eyebrow} intro={d?.intro} />
+
+  <div class="divider-ornament" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+    </svg>
+  </div>
+
+  <section id="op-het-veld" class="container">
+    <span class="eyebrow">{sectie1Eyebrow}</span>
+    <h2 style="margin-bottom: 2rem;">{sectie1Titel}</h2>
+
+    {veldProducten.length > 0 ? (
+      <div class="product-grid">
+        {veldProducten.map(p => <ProductCard product={p} />)}
+      </div>
+    ) : (
+      <p style="font-style: italic; color: var(--ink-faded);">
+        Niks staat er nu op het veld — kijk eens onder <a href="/op-het-veld/">Op het veld</a> voor wat eraan komt.
+      </p>
+    )}
+
+    <p style="margin-top: 2rem;">
+      <a class="btn btn--ghost" href="/op-het-veld/">
+        Alles wat groeit <span class="arrow">→</span>
+      </a>
+    </p>
+  </section>
+
+  <div class="divider-ornament" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+    </svg>
+  </div>
+
+  <section id="soepmobiel" class="container">
+    <span class="eyebrow">{sectie2Eyebrow}</span>
+    <h2 style="margin-bottom: 2rem;">{sectie2Titel}</h2>
+
+    <SoepmobielAgenda stops={stops} limiet={3} />
+
+    <p style="margin-top: 2rem;">
+      <a class="btn btn--ghost" href="/soepmobiel/">
+        Volledige agenda <span class="arrow">→</span>
+      </a>
+    </p>
+  </section>
+
+  <div class="divider-ornament" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+    </svg>
+  </div>
+
+  <section id="recepten" class="container">
+    <span class="eyebrow">{sectie3Eyebrow}</span>
+    <h2 style="margin-bottom: 2rem;">{sectie3Titel}</h2>
+
+    <div class="recept-grid">
+      {recepten.map(r => {
+        const d = r.data;
+        const slug = d.slug ?? r.id.replace(/\.md$/, '');
+        return (
+          <a class="recept-card" href={`/recepten/${slug}/`}>
+            {d.main_image && <img src={d.main_image} alt={d.main_image_alt ?? d.title} loading="lazy" />}
+            <div class="body">
+              <div class="meta">
+                {d.season.length > 0 && d.season.join(' · ')}
+                {(d.prep_time_minutes || d.cook_time_minutes) && (
+                  <> · {((d.prep_time_minutes ?? 0) + (d.cook_time_minutes ?? 0))} min</>
+                )}
+              </div>
+              <h3>{d.title}</h3>
+              <p style="margin: 0; font-size: 0.95rem; color: var(--ink-soft);">{d.intro}</p>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
+    <p style="margin-top: 2rem;">
+      <a class="btn btn--ghost" href="/recepten/">
+        Alle recepten <span class="arrow">→</span>
+      </a>
+    </p>
+  </section>
+
+  <BestelBlock />
+</Base>

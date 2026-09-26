@@ -1,0 +1,151 @@
+---
+import Base from '@layouts/Base.astro';
+import ProductCard from '@components/ProductCard.astro';
+import BestelBlock from '@components/BestelBlock.astro';
+import { getProducten, getPage } from '@lib/content';
+
+const producten = await getProducten();
+
+// Pagina-tekst (kop, eyebrow, intro, meta) uit src/content/pages/op-het-veld.md,
+// met fallback op de hardcoded tekst.
+const page = await getPage('op-het-veld');
+const eyebrow = page?.data.eyebrow ?? 'Editie · veld & oogst';
+const titel = page?.data.title ?? 'Op het veld';
+const intro = page?.data.intro;
+const metaDescription = page?.data.meta_description ??
+  'Wat groeit nu op de boerderij in Begijnendijk — witte asperges, fleurs de courgettes, primeuraardappelen, corne de gatte, pompoenen en meer.';
+
+// Tellen per status — voor de filter-knoppen
+const counts = {
+  alle: producten.length,
+  actief: producten.filter(p => p.data.status === 'actief').length,
+  piek: producten.filter(p => p.data.status === 'piek').length,
+  verwacht: producten.filter(p => p.data.status === 'verwacht').length,
+  einde: producten.filter(p => p.data.status === 'einde').length,
+  rust: producten.filter(p => p.data.status === 'rust').length
+};
+---
+
+<Base title={titel} description={metaDescription}>
+  <section class="container">
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{titel}</h1>
+    {intro ? (
+      <div class="page-intro" set:html={intro} />
+    ) : (
+      <p class="page-intro-fallback">
+        Alles wat op onze boerderij groeit, in volgorde van het seizoen. Sommige producten zijn er
+        het hele jaar door (zoals onze verse soep), andere maar een paar weken — fleurs de courgettes
+        bijvoorbeeld, of de eerste primeurs. Filter hieronder op status.
+      </p>
+    )}
+
+    <div class="filter-bar" role="group" aria-label="Filter op status">
+      <button class="filter-btn is-active" data-filter="alle" aria-pressed="true" type="button">
+        Alle <span class="count">{counts.alle}</span>
+      </button>
+      <button class="filter-btn" data-filter="actief" aria-pressed="false" type="button">
+        Beschikbaar <span class="count">{counts.actief}</span>
+      </button>
+      <button class="filter-btn" data-filter="piek" aria-pressed="false" type="button">
+        In topvorm <span class="count">{counts.piek}</span>
+      </button>
+      <button class="filter-btn" data-filter="verwacht" aria-pressed="false" type="button">
+        Komt eraan <span class="count">{counts.verwacht}</span>
+      </button>
+      <button class="filter-btn" data-filter="einde" aria-pressed="false" type="button">
+        Bijna gedaan <span class="count">{counts.einde}</span>
+      </button>
+    </div>
+
+    <div class="product-grid" id="product-grid">
+      {producten.map(p => (
+        <div class="grid-item" data-status={p.data.status}>
+          <ProductCard product={p} />
+        </div>
+      ))}
+    </div>
+
+    <p id="empty-state" hidden style="font-style: italic; color: var(--ink-faded); margin-top: 2rem;">
+      Geen producten in deze categorie op dit moment.
+    </p>
+  </section>
+
+  <BestelBlock />
+
+  <style>
+    /* Intro-paragraaf (uit content of fallback): zelfde maat als voorheen. */
+    .page-intro :global(p),
+    .page-intro-fallback {
+      max-width: 42rem;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 2rem 0 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--ink-faded);
+    }
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--ink);
+      padding: 0.55rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 120ms ease;
+    }
+    .filter-btn:hover { background: var(--paper-deep); }
+    .filter-btn.is-active {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .filter-btn .count {
+      font-size: 0.65rem;
+      opacity: 0.7;
+      letter-spacing: 0.05em;
+    }
+    .grid-item.is-hidden { display: none; }
+  </style>
+
+  <script>
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+    const items = document.querySelectorAll<HTMLElement>('.grid-item');
+    const emptyState = document.getElementById('empty-state');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter ?? 'alle';
+
+        // Knop-actief swap (visueel + a11y)
+        buttons.forEach(b => {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
+
+        // Items tonen/verbergen
+        let visibleCount = 0;
+        items.forEach(item => {
+          const status = item.dataset.status;
+          const show = filter === 'alle' || status === filter;
+          item.classList.toggle('is-hidden', !show);
+          if (show) visibleCount++;
+        });
+
+        if (emptyState) emptyState.hidden = visibleCount > 0;
+      });
+    });
+  </script>
+</Base>

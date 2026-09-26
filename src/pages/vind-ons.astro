@@ -1,0 +1,386 @@
+---
+import Base from '@layouts/Base.astro';
+import { getLocationsByType, getPage } from '@lib/content';
+import { mapsApiKey, mapsQuery } from '@data/site';
+import { contact, social, shop_links } from '@data/site';
+
+const boerderijen = await getLocationsByType('boerderij');
+const automaten = await getLocationsByType('automaat');
+const soepmobielen = await getLocationsByType('soepmobiel-vast');
+
+// Pagina-tekst uit src/content/pages/vind-ons.md (kop/eyebrow/intro + sectie-titels + B2B-blok),
+// met fallback op de oorspronkelijke hardcoded tekst.
+const page = await getPage('vind-ons');
+const d = page?.data;
+const eyebrow = d?.eyebrow ?? 'Editie · plekken';
+const titel = d?.title ?? 'Vind ons';
+const intro = d?.intro;
+const metaDescription = d?.meta_description ??
+  'Waar je Van os Moe vindt — boerderij, automaten in Begijnendijk en Leuven, contactgegevens.';
+const boerderijTitel = d?.sectie_boerderij_titel ?? 'Waar het allemaal gebeurt';
+const verkoopEyebrow = d?.sectie_verkoop_eyebrow ?? 'Onze verkooppunten';
+const verkoopTitel = d?.sectie_verkoop_titel ?? 'Waar je ons vindt';
+const verkoopIntro = d?.sectie_verkoop_intro;
+// B2B-blok (richtext): kop + proza. CTA-knop blijft in code.
+const b2bBlock = d?.blocks?.find((b) => b.type === 'richtext');
+const b2bHtml = b2bBlock?.type === 'richtext' ? b2bBlock.content : undefined;
+
+const mapsEmbed = `https://www.google.com/maps/embed/v1/place?key=${mapsApiKey}&q=${encodeURIComponent(mapsQuery)}&zoom=14`;
+
+// Foto per verkooppunt: eerst het `image`-veld van de locatie, anders een
+// merk-placeholder op naam.
+// De placeholder kiezen we op naam (HAL5/Kessel/Leuven vs. boerderij/Begijnendijk).
+function verkooppuntFoto(loc: typeof automaten[number]): string {
+  if (loc.data.image) return loc.data.image;
+  const naam = `${loc.data.name} ${loc.data.city}`.toLowerCase();
+  if (naam.includes('hal5') || naam.includes('kessel') || naam.includes('leuven')) {
+    return '/img/verkoop/automaat-hal5.jpg';
+  }
+  return '/img/verkoop/automaat-boerderij.jpg';
+}
+
+function soepmobielFoto(loc: typeof soepmobielen[number]): string {
+  return loc.data.image ?? '/img/verkoop/soepmobiel.jpg';
+}
+---
+
+<Base title={titel} description={metaDescription}>
+  <section class="container">
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{titel}</h1>
+    {intro ? (
+      <div class="page-intro" set:html={intro} />
+    ) : (
+      <p class="page-intro-fallback">
+        Twee vaste automaten en een rondreizende soepmobiel. Hieronder waar je ons kan
+        terugvinden, met openingstijden en contact.
+      </p>
+    )}
+  </section>
+
+  {boerderijen.length > 0 && (
+    <section class="container">
+      <span class="eyebrow">De boerderij</span>
+      <h2 style="margin-bottom: 1.5rem;">{boerderijTitel}</h2>
+
+      <div class="locations-grid">
+        {boerderijen.map(loc => {
+          const d = loc.data;
+          return (
+            <article class="location-card">
+              <div class="card-head">
+                <h3>{d.name}</h3>
+                {d.access_24_7 && <span class="badge">24u / 24u</span>}
+              </div>
+              <p class="address">
+                {d.address}<br>
+                {d.postal_code} {d.city}
+              </p>
+              {d.opening_hours && (
+                <p class="hours">
+                  <span class="label">Open</span> {d.opening_hours}
+                </p>
+              )}
+              {d.description && <p class="desc">{d.description}</p>}
+            </article>
+          );
+        })}
+      </div>
+
+      <div class="map-frame">
+        <iframe
+          src={mapsEmbed}
+          width="100%"
+          height="420"
+          style="border:0;"
+          allowfullscreen
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+          title="Kaart naar Heidestraat 39, 3130 Begijnendijk"
+        ></iframe>
+      </div>
+    </section>
+  )}
+
+  <div class="divider-ornament" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+    </svg>
+  </div>
+
+  <section class="container">
+    <span class="eyebrow">{verkoopEyebrow}</span>
+    <h2 style="margin-bottom: 1.5rem;">{verkoopTitel}</h2>
+    {verkoopIntro ? (
+      <div class="verkoop-intro" set:html={verkoopIntro} />
+    ) : (
+      <p class="verkoop-intro-fallback">
+        Twee verkoopautomaten met dagverse seizoensproducten en onze soep in pot —
+        contactloos betalen, 24 uur op 24 — plus een rondreizende soepmobiel.
+      </p>
+    )}
+
+    <div class="locations-grid verkooppunten-grid">
+      {automaten.map(loc => {
+        const d = loc.data;
+        const foto = verkooppuntFoto(loc);
+        return (
+          <article class="location-card">
+            <div class="card-photo">
+              <img src={foto} alt={`Verkoopautomaat ${d.name}`} loading="lazy" onerror="this.remove()" />
+            </div>
+            <span class="card-label">Automaat</span>
+            <div class="card-head">
+              <h3>{d.name}</h3>
+              {d.access_24_7 && <span class="badge">24u / 24u</span>}
+            </div>
+            <p class="address">
+              {d.address}<br>
+              {d.postal_code} {d.city}
+            </p>
+            {d.opening_hours && (
+              <p class="hours">
+                <span class="label">Open</span> {d.opening_hours}
+              </p>
+            )}
+            {d.description && <p class="desc">{d.description}</p>}
+          </article>
+        );
+      })}
+
+      {soepmobielen.map(loc => {
+        const d = loc.data;
+        const foto = soepmobielFoto(loc);
+        return (
+          <article class="location-card">
+            <div class="card-photo">
+              <img src={foto} alt={d.name} loading="lazy" onerror="this.remove()" />
+            </div>
+            <span class="card-label">Soepmobiel</span>
+            <div class="card-head">
+              <h3>{d.name}</h3>
+            </div>
+            <p class="address">
+              {d.address}<br>
+              {d.city}
+            </p>
+            {d.description && <p class="desc">{d.description}</p>}
+            <p style="margin: 1rem 0 0;">
+              <a href="/soepmobiel/">→ Bekijk de agenda</a>
+            </p>
+          </article>
+        );
+      })}
+    </div>
+  </section>
+
+  <div class="divider-ornament" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+      <path d="M12 2 L12 22 M2 12 L22 12 M5 5 L19 19 M5 19 L19 5" />
+    </svg>
+  </div>
+
+  <section class="container">
+    <div class="contact-row">
+      <div class="contact-block">
+        <span class="eyebrow">Contact</span>
+        <h2>Pieter rechtstreeks</h2>
+        <ul class="contact-list">
+          <li>
+            <span class="label">Telefoon</span>
+            <a href={`tel:${contact.telefoon_intl}`}>{contact.telefoon}</a>
+          </li>
+          <li>
+            <span class="label">Mail</span>
+            <a href={`mailto:${contact.email}`}>{contact.email}</a>
+          </li>
+          <li>
+            <span class="label">WhatsApp</span>
+            <a href={`https://wa.me/${contact.whatsapp.replace('+', '')}`} target="_blank" rel="noopener">
+              {contact.whatsapp}
+            </a>
+          </li>
+          {social.facebook && (
+            <li>
+              <span class="label">Facebook</span>
+              <a href={social.facebook} target="_blank" rel="noopener">/Vanosmoe</a>
+            </li>
+          )}
+        </ul>
+      </div>
+
+      <div class="contact-block contact-block--b2b">
+        <span class="eyebrow">Voor restaurants &amp; handel</span>
+        {b2bHtml ? (
+          <div class="b2b-prose" set:html={b2bHtml} />
+        ) : (
+          <>
+            <h2>Restaurants &amp; winkels</h2>
+            <p>
+              Restaurants, winkels en andere professionele klanten bestellen — net als
+              particulieren — eenvoudig via onze webshop. Voor grotere volumes of
+              specifieke seizoenswensen denken we graag mee: neem gerust rechtstreeks
+              contact op.
+            </p>
+          </>
+        )}
+        <p style="margin-top: 1.5rem;">
+          <a class="btn btn--primary" href={shop_links.shop_b2c} target="_blank" rel="noopener">
+            Naar de webshop <span class="arrow">→</span>
+          </a>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <style>
+    /* Intro's uit content (of fallback): zelfde maat als voorheen. */
+    .page-intro :global(p),
+    .page-intro-fallback {
+      max-width: 42rem;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+    .verkoop-intro :global(p),
+    .verkoop-intro-fallback {
+      max-width: 42rem;
+      margin-bottom: 2rem;
+    }
+    .locations-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .location-card {
+      background: var(--paper-deep);
+      border: 1px solid var(--ink);
+      padding: 1.5rem;
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+    .location-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .card-photo {
+      aspect-ratio: 4/3;
+      background: var(--paper);
+      border: 1px solid var(--ink);
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .card-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card-label {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--asparagus);
+      margin-bottom: 0.5rem;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+    .card-head h3 { margin: 0; font-size: 1.4rem; }
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.6rem;
+      background: var(--asparagus);
+      color: var(--paper);
+      white-space: nowrap;
+    }
+    .location-card .address {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      letter-spacing: 0.05em;
+      color: var(--ink);
+      margin: 0 0 0.75rem;
+    }
+    .location-card .hours {
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      margin: 0 0 0.75rem;
+    }
+    .location-card .hours .label {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+      margin-right: 0.5rem;
+    }
+    .location-card .desc {
+      font-size: 0.92rem;
+      color: var(--ink-soft);
+      line-height: 1.55;
+      margin: 0;
+    }
+    .map-frame {
+      border: 1px solid var(--ink);
+      margin-top: 2rem;
+      background: var(--paper-deep);
+      overflow: hidden;
+    }
+    .map-frame iframe { display: block; }
+
+    .contact-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 3rem;
+    }
+    .contact-block h2 { margin-top: 0.5rem; }
+    .contact-list {
+      list-style: none;
+      padding: 0;
+      margin: 1.5rem 0 0;
+      border-top: 1px solid var(--ink-faded);
+    }
+    .contact-list li {
+      display: grid;
+      grid-template-columns: 7rem 1fr;
+      gap: 1rem;
+      padding: 0.85rem 0;
+      border-bottom: 1px dashed var(--ink-faded);
+      align-items: baseline;
+    }
+    .contact-list .label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+    }
+    .contact-list a {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.15rem;
+      text-decoration: none;
+      color: var(--ink);
+    }
+    .contact-list a:hover { color: var(--terracotta); }
+    .contact-block--b2b {
+      background: var(--paper-deep);
+      border: 1px solid var(--ink);
+      padding: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    @media (max-width: 760px) {
+      .contact-row { grid-template-columns: 1fr; gap: 2rem; }
+    }
+  </style>
+</Base>

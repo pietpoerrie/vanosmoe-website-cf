@@ -1,0 +1,31 @@
+---
+import { contact, shop_links } from '@data/site';
+
+interface Props {
+  titel?: string;
+  body?: string;
+}
+
+const {
+  titel = 'Honger gekregen?',
+  body  = 'Bestel via onze webshop, kom langs bij de automaten, of bel rechtstreeks. Ook restaurants en winkels bestellen via de webshop.'
+} = Astro.props;
+---
+
+<aside class="bestel-block container">
+  <div>
+    <h2>{titel}</h2>
+    <p>{body}</p>
+  </div>
+  <div class="actions">
+    <a class="btn btn--primary" href={shop_links.shop_b2c} target="_blank" rel="noopener">
+      Naar de webshop <span class="arrow">→</span>
+    </a>
+    <a class="btn btn--ghost" href={`tel:${contact.telefoon_intl}`}>
+      Bel {contact.telefoon}
+    </a>
+    <a class="btn btn--ghost" href={`https://wa.me/${contact.whatsapp.replace('+','')}`} target="_blank" rel="noopener">
+      WhatsApp Pieter
+    </a>
+  </div>
+</aside>

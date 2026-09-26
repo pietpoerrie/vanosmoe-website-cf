@@ -1,0 +1,129 @@
+---
+import Base from '@layouts/Base.astro';
+import { navigation } from '@data/site';
+---
+
+<Base
+  title="Niet gevonden"
+  description="Deze pagina bestaat niet (meer). Hier zijn een paar plekken waar je wel terechtkunt."
+  showDateStrip={false}
+  noindex={true}
+>
+  <section class="container container--prose notfound">
+    <div class="stamp" aria-hidden="true">
+      <span class="num">404</span>
+      <span class="label">Editio · Lost &amp; Found</span>
+    </div>
+
+    <span class="eyebrow">Editie · Verdwaald</span>
+    <h1>Hier groeit niks</h1>
+
+    <p class="tagline" style="margin-top: 1.5rem;">
+      Deze pagina is <em>niet meer</em> waar ze ooit stond.
+    </p>
+
+    <p style="margin-top: 1.5rem; max-width: 36rem; color: var(--ink-soft); font-size: 1.05rem; line-height: 1.7;">
+      Misschien is het adres veranderd, misschien typt iemand iets verkeerd, of misschien
+      heeft een muis aan de bekabeling geknaagd. Geen probleem — hieronder een paar plekken
+      die wél bestaan.
+    </p>
+
+    <ul class="links">
+      {navigation.map(item => (
+        <li>
+          <a href={item.href}>
+            <span class="dot" aria-hidden="true"></span>
+            {item.label}
+          </a>
+        </li>
+      ))}
+      <li>
+        <a href="/">
+          <span class="dot" aria-hidden="true"></span>
+          Terug naar de homepage
+        </a>
+      </li>
+    </ul>
+  </section>
+
+  <style>
+    .notfound {
+      padding-block: clamp(3rem, 8vw, 6rem);
+      position: relative;
+    }
+    .stamp {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+      border: 1px solid var(--ink);
+      padding: 1rem 1.5rem;
+      background: var(--paper-deep);
+      transform: rotate(-3deg);
+      margin-bottom: 2.5rem;
+      position: relative;
+    }
+    .stamp::before {
+      content: '';
+      position: absolute;
+      inset: 4px;
+      border: 1px dashed var(--ink);
+      pointer-events: none;
+    }
+    .stamp .num {
+      font-family: var(--font-display);
+      font-style: italic;
+      font-weight: 300;
+      font-size: 3.5rem;
+      line-height: 0.9;
+      color: var(--terracotta);
+      letter-spacing: -0.04em;
+    }
+    .stamp .label {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-faded);
+    }
+
+    .links {
+      list-style: none;
+      padding: 0;
+      margin: 2.5rem 0 0;
+      border-top: 1px solid var(--ink-faded);
+    }
+    .links li {
+      border-bottom: 1px dashed var(--ink-faded);
+    }
+    .links a {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 1rem 0;
+      text-decoration: none;
+      color: var(--ink);
+      font-family: var(--font-display);
+      font-style: italic;
+      font-size: 1.3rem;
+      transition: color 120ms ease, padding 140ms ease;
+    }
+    .links a:hover {
+      color: var(--terracotta);
+      padding-left: 0.5rem;
+    }
+    .links .dot {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--asparagus);
+      flex-shrink: 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .links a { transition: none; }
+      .links a:hover { padding-left: 0; }
+    }
+  </style>
+</Base>

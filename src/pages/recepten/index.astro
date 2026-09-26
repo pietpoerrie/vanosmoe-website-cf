@@ -1,0 +1,160 @@
+---
+import Base from '@layouts/Base.astro';
+import BestelBlock from '@components/BestelBlock.astro';
+import { getRecepten, getPage } from '@lib/content';
+
+const recepten = await getRecepten();
+
+// Pagina-tekst uit src/content/pages/recepten.md, fallback op de hardcoded tekst.
+const page = await getPage('recepten');
+const eyebrow = page?.data.eyebrow ?? 'Editie · uit de keuken';
+const titel = page?.data.title ?? 'Recepten';
+const intro = page?.data.intro;
+const metaDescription = page?.data.meta_description ??
+  'Recepten uit onze keuken — voor witte asperges, fleurs de courgettes, primeuraardappelen en alles dat op het veld groeit.';
+
+const counts = {
+  alle: recepten.length,
+  lente: recepten.filter(r => r.data.season.includes('lente')).length,
+  zomer: recepten.filter(r => r.data.season.includes('zomer')).length,
+  herfst: recepten.filter(r => r.data.season.includes('herfst')).length,
+  winter: recepten.filter(r => r.data.season.includes('winter')).length
+};
+---
+
+<Base title={titel} description={metaDescription}>
+  <section class="container">
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{titel}</h1>
+    {intro ? (
+      <div class="page-intro" set:html={intro} />
+    ) : (
+      <p class="page-intro-fallback">
+        Bereidingen die we zelf maken, met de producten die we zelf telen. Klassiekers,
+        geen uitvindsels. Filter hieronder op seizoen — een aspergeroomsoep in
+        december maken kan, maar smaakt dan niet zoals het hoort.
+      </p>
+    )}
+
+    <div class="filter-bar" role="group" aria-label="Filter op seizoen">
+      <button class="filter-btn is-active" data-filter="alle" aria-pressed="true" type="button">
+        Alle <span class="count">{counts.alle}</span>
+      </button>
+      <button class="filter-btn" data-filter="lente" aria-pressed="false" type="button">
+        Lente <span class="count">{counts.lente}</span>
+      </button>
+      <button class="filter-btn" data-filter="zomer" aria-pressed="false" type="button">
+        Zomer <span class="count">{counts.zomer}</span>
+      </button>
+      <button class="filter-btn" data-filter="herfst" aria-pressed="false" type="button">
+        Herfst <span class="count">{counts.herfst}</span>
+      </button>
+      <button class="filter-btn" data-filter="winter" aria-pressed="false" type="button">
+        Winter <span class="count">{counts.winter}</span>
+      </button>
+    </div>
+
+    <div class="recept-grid" id="recept-grid">
+      {recepten.map(r => {
+        const d = r.data;
+        const slug = d.slug ?? r.id.replace(/\.md$/, '');
+        const seasonAttr = d.season.join(',');
+        const total = (d.prep_time_minutes ?? 0) + (d.cook_time_minutes ?? 0);
+        return (
+          <a class="recept-card grid-item" href={`/recepten/${slug}`} data-seasons={seasonAttr}>
+            {d.main_image && <img src={d.main_image} alt={d.main_image_alt ?? d.title} loading="lazy" />}
+            <div class="body">
+              <div class="meta">
+                {d.season.length > 0 && d.season.join(' · ')}
+                {total > 0 && <> · {total} min</>}
+                {d.servings && <> · {d.servings} pers</>}
+              </div>
+              <h3>{d.title}</h3>
+              <p class="intro" style="margin: 0; font-size: 0.95rem; color: var(--ink-soft);">{d.intro}</p>
+            </div>
+          </a>
+        );
+      })}
+    </div>
+
+    <p id="empty-state" hidden style="font-style: italic; color: var(--ink-faded); margin-top: 2rem;">
+      Geen recepten in dit seizoen — nog niet, althans.
+    </p>
+  </section>
+
+  <BestelBlock />
+
+  <style>
+    /* Intro-paragraaf (uit content of fallback): zelfde maat als voorheen. */
+    .page-intro :global(p),
+    .page-intro-fallback {
+      max-width: 42rem;
+      color: var(--ink-soft);
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+    .filter-bar {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin: 2rem 0 2.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--ink-faded);
+    }
+    .filter-btn {
+      background: transparent;
+      border: 1px solid var(--ink);
+      padding: 0.55rem 1rem;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 120ms ease;
+    }
+    .filter-btn:hover { background: var(--paper-deep); }
+    .filter-btn.is-active {
+      background: var(--ink);
+      color: var(--paper);
+    }
+    .filter-btn .count {
+      font-size: 0.65rem;
+      opacity: 0.7;
+      letter-spacing: 0.05em;
+    }
+    .grid-item.is-hidden { display: none; }
+  </style>
+
+  <script>
+    const buttons = document.querySelectorAll<HTMLButtonElement>('.filter-btn');
+    const items = document.querySelectorAll<HTMLElement>('.grid-item');
+    const emptyState = document.getElementById('empty-state');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.dataset.filter ?? 'alle';
+
+        buttons.forEach(b => {
+          b.classList.remove('is-active');
+          b.setAttribute('aria-pressed', 'false');
+        });
+        btn.classList.add('is-active');
+        btn.setAttribute('aria-pressed', 'true');
+
+        let visibleCount = 0;
+        items.forEach(item => {
+          const seasons = (item.dataset.seasons ?? '').split(',');
+          const show = filter === 'alle' || seasons.includes(filter);
+          item.classList.toggle('is-hidden', !show);
+          if (show) visibleCount++;
+        });
+
+        if (emptyState) emptyState.hidden = visibleCount > 0;
+      });
+    });
+  </script>
+</Base>

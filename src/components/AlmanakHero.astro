@@ -1,0 +1,99 @@
+---
+import { maanden, huidigSeizoen, maandNummer } from '@data/site';
+import type { Product } from '@lib/content';
+
+interface Props {
+  feature?: Product;
+  /** Hero-bovenkop uit pages/home.md (`eyebrow`); fallback = hardcoded. */
+  eyebrow?: string;
+  /** Hero-intro-html uit pages/home.md (`intro`); fallback = hardcoded. */
+  intro?: string;
+}
+
+const { feature, eyebrow, intro } = Astro.props;
+const nu = new Date();
+const seizoen = huidigSeizoen(nu);
+const maandIdx = nu.getMonth();
+---
+
+<section class="almanak-hero container">
+  <div class="month-block" style={`--season-color:${seizoen.kleur}`}>
+    <span class="eyebrow">Editie {seizoen.naam} · {nu.getFullYear()}</span>
+    <div class="month-number">{maandNummer(nu)}</div>
+    <div class="month-name">{maanden[maandIdx]}</div>
+
+    <div class="season-banner" style={`background:${seizoen.kleur}`}>
+      {seizoen.naam} op het veld
+    </div>
+
+    {feature && (
+      <div class="feature-product">
+        <div class="label">Deze maand in seizoen</div>
+        {feature.data.image && (
+          <img
+            class="feature-img"
+            src={feature.data.image}
+            alt={feature.data.image_alt ?? feature.data.name}
+            loading="eager"
+          />
+        )}
+        <div class="name">{feature.data.name}</div>
+        {feature.data.name_latin && (
+          <div class="latin">{feature.data.name_latin}</div>
+        )}
+        <p style="margin-top: 0.6rem; font-size: 0.95rem; color: var(--ink-soft);">
+          {feature.data.short_description}
+        </p>
+      </div>
+    )}
+  </div>
+
+  <div>
+    <span class="eyebrow">{eyebrow ?? 'Streekboerderij · Begijnendijk · sinds 2004'}</span>
+    <h1 class="sr-only">Van os Moe — streekboerderij in Begijnendijk</h1>
+    <p class="tagline">
+      Niks smaakt zo goe als<br /><em>de soep van os moe</em>.
+    </p>
+    {intro ? (
+      <div class="hero-intro" set:html={intro} />
+    ) : (
+      <p class="hero-intro-fallback">
+        Op onze boerderij in Begijnendijk telen we al tientallen jaren witte asperges,
+        fleurs de courgettes, primeuraardappelen en corne de gatte. Onder
+        het motto <em>"niks smaakt zo goe als de soep van os moe"</em> maken we van
+        al onze groenten heerlijk verse soep.
+      </p>
+    )}
+    <div style="display: flex; gap: 0.75rem; margin-top: 2rem; flex-wrap: wrap;">
+      <a class="btn btn--primary" href="/op-het-veld/">
+        Wat groeit nu <span class="arrow">→</span>
+      </a>
+      <a class="btn btn--ghost" href="/soepmobiel/">
+        Soepmobiel agenda
+      </a>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Hero-intro (uit content of fallback): zelfde maat als voorheen. */
+  .hero-intro :global(p),
+  .hero-intro-fallback {
+    margin-top: 2rem;
+    max-width: 36rem;
+    color: var(--ink-soft);
+    font-size: 1.05rem;
+    line-height: 1.7;
+  }
+  /* Feature-product-foto in het month-block: almanak-omkaderd, vaste
+     4:3-verhouding zodat elk roterend seizoensproduct even netjes oogt. */
+  .feature-img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border: 1px solid var(--ink);
+    margin-bottom: 0.9rem;
+    background: var(--paper-deep);
+  }
+</style>
